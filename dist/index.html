@@ -81,6 +81,7 @@
     .brand { font-family: var(--display); font-size: clamp(1.35rem, 2.2vw, 2rem); letter-spacing: -.045em; line-height: .95; }
     .issue { margin-top: 7px; font: 500 .71rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
     .mast-right { display: flex; gap: 18px; align-items: start; }
+    .mast-tools { display: flex; gap: 8px; align-items: start; }
     .dateblock { text-align: right; }
     .date-number { font-family: var(--display); font-size: 2.65rem; line-height: .78; color: var(--accent); }
     .date-meta { margin-top: 8px; font: 500 .7rem/1.2 var(--mono); text-transform: uppercase; }
@@ -93,6 +94,12 @@
       box-shadow: var(--shadow); transition: transform .16s ease;
     }
     .skin-toggle:hover { transform: translateY(-2px); }
+    .history-toggle {
+      border: var(--line-w) solid var(--line); border-radius: var(--radius); background: var(--accent); color: var(--accent-ink);
+      min-width: 104px; padding: 9px 12px; font: 600 .72rem/1 var(--mono); text-transform: uppercase;
+      box-shadow: var(--shadow); transition: transform .16s ease;
+    }
+    .history-toggle:hover { transform: translateY(-2px); }
     .skin-menu {
       display: none; position: absolute; right: 0; top: calc(100% + 8px); width: 252px; z-index: 20;
       padding: 10px; background: var(--surface); border: var(--line-w) solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
@@ -181,6 +188,43 @@
     .quick-form input:focus { background: var(--surface-2); }
     .footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 14px; color: var(--muted); font: .67rem/1.4 var(--mono); text-transform: uppercase; }
 
+    /* === HISTORY === */
+    .history-scrim {
+      position: fixed; inset: 0; z-index: 39; border: 0; padding: 0; background: color-mix(in srgb, var(--bg) 68%, transparent);
+      backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    }
+    .history-scrim.open { opacity: 1; pointer-events: auto; }
+    .history-panel {
+      position: fixed; z-index: 40; top: 0; right: 0; width: min(560px, 100%); height: 100dvh;
+      display: grid; grid-template-rows: auto auto auto 1fr; color: var(--ink); background: var(--surface);
+      border-left: var(--line-w) solid var(--line); box-shadow: -20px 0 70px rgba(0,0,0,.16);
+      transform: translateX(102%); transition: transform .26s cubic-bezier(.2,.75,.25,1); overflow: hidden;
+    }
+    .history-panel.open { transform: none; }
+    .history-head { display: flex; align-items: start; justify-content: space-between; gap: 18px; padding: 24px 22px 17px; border-bottom: var(--line-w) solid var(--line); }
+    .history-head h2 { margin: 5px 0 0; font-family: var(--display); font-size: clamp(2rem, 6vw, 4.2rem); line-height: .9; letter-spacing: -.055em; text-transform: uppercase; }
+    .history-close { flex: 0 0 auto; }
+    .history-stats { display: grid; grid-template-columns: 1fr 1fr; border-bottom: var(--line-w) solid var(--line); }
+    .history-stat { padding: 15px 20px; }
+    .history-stat + .history-stat { border-left: var(--line-w) solid var(--line); }
+    .history-stat strong { display: block; font-family: var(--display); font-size: 2.2rem; line-height: 1; color: var(--accent); }
+    .history-stat span { font: .68rem/1 var(--mono); color: var(--muted); text-transform: uppercase; }
+    .history-form { display: grid; grid-template-columns: 1fr 54px; border-bottom: var(--line-w) solid var(--line); }
+    .history-form input { min-width: 0; border: 0; border-right: var(--line-w) solid var(--line); padding: 15px 18px; outline: 0; background: transparent; }
+    .history-form input:focus { background: var(--surface-2); }
+    .history-form button { border: 0; border-radius: 0; }
+    .history-scroll { overflow-y: auto; overscroll-behavior: contain; }
+    .history-empty { min-height: 230px; display: grid; place-items: center; padding: 30px; color: var(--muted); font: .78rem/1.65 var(--mono); text-align: center; }
+    .history-day { border-bottom: var(--line-w) solid var(--line); }
+    .history-date { position: sticky; top: 0; z-index: 1; padding: 9px 18px; background: var(--surface-2); font: 600 .7rem/1 var(--mono); color: var(--accent); text-transform: uppercase; }
+    .history-entry { display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; padding: 12px 14px 12px 18px; border-top: 1px solid color-mix(in srgb, var(--line) 24%, transparent); }
+    .history-entry:first-of-type { border-top: 0; }
+    .history-check { display: grid; place-items: center; width: 28px; height: 28px; background: var(--signal); border: 1px solid var(--line); font: 700 .78rem/1 var(--mono); color: var(--ink); }
+    .history-text { min-width: 0; overflow-wrap: anywhere; }
+    .history-meta { display: block; margin-top: 3px; font: .64rem/1.2 var(--mono); color: var(--muted); text-transform: uppercase; }
+    .history-remove { width: 30px; height: 30px; }
+    body.history-open { overflow: hidden; }
+
     /* === DIALOG & FOCUS === */
     dialog { width: min(530px, calc(100% - 30px)); border: var(--line-w) solid var(--line); border-radius: var(--radius); color: var(--ink); background: var(--surface); box-shadow: var(--shadow); }
     dialog::backdrop { background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(4px); }
@@ -207,6 +251,7 @@
       .workspace { grid-template-columns: 1fr; }
       .masthead { grid-template-columns: 1fr; }
       .mast-right { justify-content: space-between; }
+      .mast-tools { flex-wrap: wrap; justify-content: flex-start; }
       .dateblock { text-align: left; order: 2; }
       .skin-wrap { order: 1; }
       .skin-menu { left: 0; right: auto; }
@@ -219,6 +264,8 @@
       .brand { font-size: 1.25rem; }
       .brandmark { height: 34px; }
       .date-number { font-size: 2.1rem; }
+      .mast-tools { gap: 6px; }
+      .skin-toggle, .history-toggle { min-width: 0; }
       .now { padding: 45px 17px 18px; }
       .focus-meta { grid-template-columns: 1fr; }
       .field + .field { border-left: 0; border-top: var(--line-w) solid var(--line); padding-left: 0; }
@@ -243,13 +290,16 @@
       </div>
       <div class="mast-right">
         <div class="dateblock"><div class="date-number" id="dateNumber"></div><div class="date-meta" id="dateMeta"></div></div>
-        <div class="skin-wrap">
-          <button class="skin-toggle" id="skinToggle" type="button" aria-haspopup="true" aria-expanded="false">皮肤 / Swiss</button>
-          <div class="skin-menu" id="skinMenu" role="menu" aria-label="选择工作台皮肤">
-            <button class="skin-option" type="button" data-skin="swiss"><span class="swatch swiss-swatch"><i></i><i></i></span><span><b class="skin-name">Swiss Signal</b><small class="skin-note">红 / 黑 / 严格网格</small></span></button>
-            <button class="skin-option" type="button" data-skin="bauhaus"><span class="swatch bauhaus-swatch"><i></i><i></i></span><span><b class="skin-name">Bauhaus Play</b><small class="skin-note">蓝 / 黄 / 几何感</small></span></button>
-            <button class="skin-option" type="button" data-skin="editorial"><span class="swatch editorial-swatch"><i></i><i></i></span><span><b class="skin-name">Paper Editorial</b><small class="skin-note">纸张 / 衬线 / 安静</small></span></button>
-            <button class="skin-option" type="button" data-skin="midnight"><span class="swatch midnight-swatch"><i></i><i></i></span><span><b class="skin-name">Night Transit</b><small class="skin-note">深夜 / 青蓝 / 高对比</small></span></button>
+        <div class="mast-tools">
+          <button class="history-toggle" id="historyToggle" type="button" aria-controls="historyPanel" aria-expanded="false">记录 / 0</button>
+          <div class="skin-wrap">
+            <button class="skin-toggle" id="skinToggle" type="button" aria-haspopup="true" aria-expanded="false">皮肤 / Swiss</button>
+            <div class="skin-menu" id="skinMenu" role="menu" aria-label="选择工作台皮肤">
+              <button class="skin-option" type="button" data-skin="swiss"><span class="swatch swiss-swatch"><i></i><i></i></span><span><b class="skin-name">Swiss Signal</b><small class="skin-note">红 / 黑 / 严格网格</small></span></button>
+              <button class="skin-option" type="button" data-skin="bauhaus"><span class="swatch bauhaus-swatch"><i></i><i></i></span><span><b class="skin-name">Bauhaus Play</b><small class="skin-note">蓝 / 黄 / 几何感</small></span></button>
+              <button class="skin-option" type="button" data-skin="editorial"><span class="swatch editorial-swatch"><i></i><i></i></span><span><b class="skin-name">Paper Editorial</b><small class="skin-note">纸张 / 衬线 / 安静</small></span></button>
+              <button class="skin-option" type="button" data-skin="midnight"><span class="swatch midnight-swatch"><i></i><i></i></span><span><b class="skin-name">Night Transit</b><small class="skin-note">深夜 / 青蓝 / 高对比</small></span></button>
+            </div>
           </div>
         </div>
       </div>
@@ -306,6 +356,23 @@
     <footer class="footer"><span>Data stays in this browser / 数据保存在当前浏览器</span><span>Open → choose one → begin</span></footer>
   </main>
 
+  <button class="history-scrim" id="historyScrim" type="button" aria-label="关闭完成记录"></button>
+  <aside class="history-panel" id="historyPanel" aria-hidden="true" aria-labelledby="historyTitle">
+    <div class="history-head">
+      <div><div class="module-kicker">Done archive / 只记完成</div><h2 id="historyTitle">完成记录</h2></div>
+      <button class="icon-btn history-close" id="historyClose" type="button" aria-label="关闭完成记录">×</button>
+    </div>
+    <div class="history-stats" aria-label="近七天完成概览">
+      <div class="history-stat"><strong id="historyCount">0</strong><span>近 7 天完成</span></div>
+      <div class="history-stat"><strong id="historyDays">0</strong><span>近 7 天活跃日</span></div>
+    </div>
+    <form class="history-form" id="historyForm">
+      <input id="historyText" aria-label="补记完成事项" placeholder="今天还完成了什么？" autocomplete="off" required>
+      <button class="primary" type="submit" aria-label="添加完成记录">＋</button>
+    </form>
+    <div class="history-scroll" id="historyList"></div>
+  </aside>
+
   <dialog id="finishDialog">
     <div class="dialog-inner">
       <h2>真的完成了吗？</h2>
@@ -322,7 +389,7 @@
         { label: '主任务 / Main', text: '', done: false },
         { label: '英语保底 / English', text: '', done: false },
         { label: '生活事项 / Life', text: '', done: false }
-      ], week: [], inbox: []
+      ], week: [], inbox: [], history: []
     };
     const themeNames = { swiss: 'Swiss', bauhaus: 'Bauhaus', editorial: 'Editorial', midnight: 'Midnight' };
     const $ = (id) => document.getElementById(id);
@@ -331,6 +398,7 @@
         const saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
         const merged = { ...defaults, ...saved };
         merged.today = (saved.today || defaults.today).map((item, i) => ({ ...item, label: defaults.today[i].label }));
+        merged.history = Array.isArray(saved.history) ? saved.history : [];
         return merged;
       } catch { return JSON.parse(JSON.stringify(defaults)); }
     };
@@ -359,12 +427,34 @@
         const row = document.createElement('div'); row.className = 'today-row' + (item.done ? ' completed' : '');
         const button = document.createElement('button'); button.type = 'button'; button.className = 'check' + (item.done ? ' done' : ''); button.textContent = '✓';
         button.setAttribute('aria-label', item.done ? `将${item.label}标记为未完成` : `完成${item.label}`);
-        button.addEventListener('click', () => { state.today[index].done = !state.today[index].done; save(); renderToday(); });
+        button.addEventListener('click', () => {
+          const target = state.today[index];
+          if (!target.done) {
+            target.done = true;
+            const text = target.text.trim();
+            if (text) target.logId = addHistory(text, target.label.split(' / ')[0]);
+          } else {
+            target.done = false;
+            if (target.logId) state.history = state.history.filter(entry => entry.id !== target.logId);
+            delete target.logId;
+          }
+          save(target.done ? '完成，已记下' : '已撤销完成'); renderToday(); renderHistory();
+        });
         const copy = document.createElement('div'); copy.className = 'today-copy';
         const label = document.createElement('label'); label.textContent = item.label;
         const input = document.createElement('input'); input.value = item.text;
         input.placeholder = index === 0 ? '今天唯一的主线' : index === 1 ? '一次短口语或听力' : '没有就留空';
-        input.addEventListener('input', () => { state.today[index].text = input.value; save(); });
+        input.addEventListener('input', () => {
+          state.today[index].text = input.value;
+          const target = state.today[index];
+          if (target.done && target.logId) {
+            const entry = state.history.find(item => item.id === target.logId);
+            if (entry) entry.text = input.value.trim() || entry.text;
+          } else if (target.done && input.value.trim()) {
+            target.logId = addHistory(input.value.trim(), target.label.split(' / ')[0]); renderHistory();
+          }
+          save();
+        });
         copy.append(label, input); row.append(button, copy); $('todayList').append(row);
       });
     }
@@ -395,9 +485,61 @@
         li.append(text, del); list.append(li);
       });
     }
+    function addHistory(text, source = '补记') {
+      const id = crypto.randomUUID();
+      state.history.unshift({ id, text, source, completedAt: new Date().toISOString() });
+      return id;
+    }
+    function dateKey(iso) {
+      const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    function historyDateLabel(key) {
+      const date = new Date(key + 'T12:00:00'); const now = new Date();
+      const todayKey = dateKey(now.toISOString());
+      const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+      if (key === todayKey) return '今天 / TODAY';
+      if (key === dateKey(yesterday.toISOString())) return '昨天 / YESTERDAY';
+      return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 · 周${'日一二三四五六'[date.getDay()]}`;
+    }
+    function renderHistory() {
+      const list = $('historyList'); list.innerHTML = '';
+      const now = new Date(); const cutoff = new Date(now); cutoff.setDate(now.getDate() - 6); cutoff.setHours(0, 0, 0, 0);
+      const recent = state.history.filter(entry => new Date(entry.completedAt) >= cutoff);
+      $('historyCount').textContent = recent.length; $('historyDays').textContent = new Set(recent.map(entry => dateKey(entry.completedAt))).size;
+      $('historyToggle').textContent = `记录 / ${recent.length}`;
+      if (!state.history.length) { list.innerHTML = '<div class="history-empty">还没有完成记录。<br>完成一件事再来，不需要为了打卡而打卡。</div>'; return; }
+      const grouped = state.history.slice().sort((a, b) => b.completedAt.localeCompare(a.completedAt)).reduce((groups, entry) => {
+        const key = dateKey(entry.completedAt); (groups[key] ||= []).push(entry); return groups;
+      }, {});
+      Object.entries(grouped).forEach(([key, entries]) => {
+        const section = document.createElement('section'); section.className = 'history-day';
+        const heading = document.createElement('div'); heading.className = 'history-date'; heading.textContent = historyDateLabel(key); section.append(heading);
+        entries.forEach(entry => {
+          const row = document.createElement('div'); row.className = 'history-entry';
+          const check = document.createElement('span'); check.className = 'history-check'; check.textContent = '✓';
+          const copy = document.createElement('div'); copy.className = 'history-text'; copy.textContent = entry.text;
+          const meta = document.createElement('small'); meta.className = 'history-meta';
+          meta.textContent = `${entry.source || '完成'} · ${new Date(entry.completedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })}`; copy.append(meta);
+          const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'icon-btn history-remove'; remove.textContent = '×'; remove.setAttribute('aria-label', `删除记录：${entry.text}`);
+          remove.addEventListener('click', () => {
+            if (!confirm(`删除这条完成记录？\n${entry.text}`)) return;
+            state.history = state.history.filter(item => item.id !== entry.id);
+            state.today.forEach(item => { if (item.logId === entry.id) delete item.logId; });
+            save('记录已删除'); renderHistory();
+          });
+          row.append(check, copy, remove); section.append(row);
+        });
+        list.append(section);
+      });
+    }
+    function setHistoryOpen(open) {
+      document.body.classList.toggle('history-open', open); $('historyPanel').classList.toggle('open', open); $('historyScrim').classList.toggle('open', open);
+      $('historyPanel').setAttribute('aria-hidden', String(!open)); $('historyToggle').setAttribute('aria-expanded', String(open));
+      if (open) setTimeout(() => $('historyText').focus(), 180);
+    }
 
     bindText('focusTask', 'focusTask'); bindText('doneWhen', 'doneWhen'); bindText('resumeAt', 'resumeAt');
-    renderToday(); renderWeek(); renderInbox(); applyTheme(state.theme, false);
+    renderToday(); renderWeek(); renderInbox(); renderHistory(); applyTheme(state.theme, false);
 
     const today = new Date();
     $('dateNumber').textContent = String(today.getDate()).padStart(2, '0');
@@ -414,6 +556,14 @@
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.skin-wrap')) { $('skinMenu').classList.remove('open'); $('skinToggle').setAttribute('aria-expanded', 'false'); }
     });
+    $('historyToggle').addEventListener('click', () => setHistoryOpen(true));
+    $('historyClose').addEventListener('click', () => setHistoryOpen(false));
+    $('historyScrim').addEventListener('click', () => setHistoryOpen(false));
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && $('historyPanel').classList.contains('open')) setHistoryOpen(false); });
+    $('historyForm').addEventListener('submit', (event) => {
+      event.preventDefault(); const text = $('historyText').value.trim(); if (!text) return;
+      addHistory(text); $('historyText').value = ''; save('已记下完成'); renderHistory();
+    });
     $('weekForm').addEventListener('submit', (event) => {
       event.preventDefault(); state.week.push({ id: crypto.randomUUID(), date: $('weekDate').value, text: $('weekText').value.trim() });
       $('weekText').value = ''; save('已加入七天安排'); renderWeek();
@@ -428,8 +578,9 @@
     $('clearFocus').addEventListener('click', () => $('finishDialog').showModal());
     $('cancelFinish').addEventListener('click', () => $('finishDialog').close());
     $('confirmFinish').addEventListener('click', () => {
+      const completed = state.focusTask.trim(); if (completed) addHistory(completed, '当前任务');
       state.focusTask = state.doneWhen = state.resumeAt = ''; ['focusTask', 'doneWhen', 'resumeAt'].forEach(id => $(id).value = '');
-      save('完成了'); $('finishDialog').close();
+      save(completed ? '完成，已记下' : '已清空'); renderHistory(); $('finishDialog').close();
     });
   </script>
 </body>
