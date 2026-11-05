@@ -269,6 +269,8 @@
     }
   </style>
   <link rel="stylesheet" href="workdesk.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,500;1,600&family=LXGW+WenKai+TC&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="skins.css">
 </head>
 <body data-theme="swiss">
   <main class="shell">
@@ -287,6 +289,8 @@
               <button class="skin-option" type="button" data-skin="swiss"><span class="swatch swiss-swatch"><i></i><i></i></span><span><b class="skin-name">Swiss Signal</b><small class="skin-note">红 / 黑 / 严格网格</small></span></button>
               <button class="skin-option" type="button" data-skin="bauhaus"><span class="swatch bauhaus-swatch"><i></i><i></i></span><span><b class="skin-name">Bauhaus Play</b><small class="skin-note">蓝 / 黄 / 几何感</small></span></button>
               <button class="skin-option" type="button" data-skin="editorial"><span class="swatch editorial-swatch"><i></i><i></i></span><span><b class="skin-name">Paper Editorial</b><small class="skin-note">纸张 / 衬线 / 安静</small></span></button>
+              <button class="skin-option" type="button" data-skin="stroll"><span class="swatch stroll-swatch"><i></i><i></i></span><span><b class="skin-name">日常散步</b><small class="skin-note">奶油纸 / 手写 / 日常感</small></span></button>
+              <button class="skin-option" type="button" data-skin="blueletter"><span class="swatch blueletter-swatch"><i></i><i></i></span><span><b class="skin-name">蓝色来信</b><small class="skin-note">钴蓝 / 斜体大字 / 纸上请柬</small></span></button>
             </div>
           </div>
         </div>
@@ -384,7 +388,7 @@
       { id: 'exam-international-finance-2026-11-26', date: '2026-11-26', text: '国际金融 · 期末考试' },
       { id: 'exam-finance-2026-11-30', date: '2026-11-30', text: '金融学 · 期末考试' }
     ];
-    const themeNames = { swiss: 'Swiss', bauhaus: 'Bauhaus', editorial: 'Editorial' };
+    const themeNames = { swiss: 'Swiss', bauhaus: 'Bauhaus', editorial: 'Editorial', stroll: '日常散步', blueletter: '蓝色来信' };
     const $ = (id) => document.getElementById(id);
     const load = () => {
       try {
@@ -593,5 +597,6 @@
     });
   </script>
   <script src="workdesk.js"></script>
+  <script src="skins.js"></script>
 </body>
 </html>
