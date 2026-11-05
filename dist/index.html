@@ -325,7 +325,7 @@
 
         <article class="module today-module" aria-labelledby="todayTitle">
           <span class="module-index">02</span>
-          <div class="section-head"><h2 class="section-title" id="todayTitle">今天最多三项</h2><span class="section-note">不是愿望清单<br>只留真正会做的事</span></div>
+          <div class="section-head"><h2 class="section-title" id="todayTitle">今天最多两项</h2><span class="section-note">不是愿望清单<br>只留真正会做的事</span></div>
           <div class="today-list" id="todayList"></div>
         </article>
       </section>
@@ -387,7 +387,6 @@
       focusTask: '', doneWhen: '', resumeAt: '', theme: 'swiss',
       today: [
         { label: '主任务 / Main', text: '', done: false },
-        { label: '英语保底 / English', text: '', done: false },
         { label: '生活事项 / Life', text: '', done: false }
       ], week: [], inbox: [], history: [], systemUpdate: ''
     };
@@ -403,7 +402,9 @@
       try {
         const saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
         const merged = { ...defaults, ...saved };
-        merged.today = (saved.today || defaults.today).map((item, i) => ({ ...item, label: defaults.today[i].label }));
+        const savedToday = Array.isArray(saved.today) ? saved.today : defaults.today;
+        merged.today = savedToday.filter(item => !/英语保底|English/.test(item.label || '')).slice(0, 2).map((item, i) => ({ ...item, label: defaults.today[i].label }));
+        while (merged.today.length < defaults.today.length) merged.today.push({ ...defaults.today[merged.today.length] });
         merged.history = Array.isArray(saved.history) ? saved.history : [];
         merged.week = Array.isArray(saved.week) ? saved.week : [];
         merged.inbox = Array.isArray(saved.inbox) ? saved.inbox : [];
@@ -462,7 +463,7 @@
         const copy = document.createElement('div'); copy.className = 'today-copy';
         const label = document.createElement('label'); label.textContent = item.label;
         const input = document.createElement('input'); input.value = item.text;
-        input.placeholder = index === 0 ? '今天唯一的主线' : index === 1 ? '一次短口语或听力' : '没有就留空';
+        input.placeholder = index === 0 ? '今天唯一的主线' : '没有就留空';
         input.addEventListener('input', () => {
           state.today[index].text = input.value;
           const target = state.today[index];
