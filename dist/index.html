@@ -31,12 +31,6 @@
       --signal: #243d31; --danger: #a33a2b; --radius: 2px; --shadow: none;
       --display: "DM Serif Display", serif; --body: "IBM Plex Sans Condensed", sans-serif; --line-w: 1px;
     }
-    body[data-theme="midnight"] {
-      --bg: #071018; --surface: #0d1923; --surface-2: #122430; --ink: #eaf8ff;
-      --muted: #7f9baa; --line: #2b5368; --accent: #59d8ff; --accent-ink: #05131b;
-      --signal: #c7ff4a; --danger: #ff6d7d; --radius: 14px; --shadow: 0 22px 60px rgba(0,0,0,.28);
-      --display: "Syne", sans-serif; --body: "IBM Plex Sans Condensed", sans-serif; --line-w: 1px;
-    }
 
     /* === BASE === */
     * { box-sizing: border-box; }
@@ -59,11 +53,6 @@
     body[data-theme="editorial"]::before {
       opacity: .16; background-size: 5px 5px;
       background-image: repeating-linear-gradient(32deg, var(--line) 0 1px, transparent 1px 5px);
-    }
-    body[data-theme="midnight"]::before {
-      opacity: .35; background-size: 28px 28px;
-      background-image: linear-gradient(color-mix(in srgb, var(--accent) 14%, transparent) 1px, transparent 1px),
-        linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent) 1px, transparent 1px);
     }
     button, input { font: inherit; color: inherit; }
     button { cursor: pointer; }
@@ -115,7 +104,6 @@
     .swiss-swatch i:first-child { background: #efede5; } .swiss-swatch i:last-child { background: #e32b22; }
     .bauhaus-swatch i:first-child { background: #1847e8; } .bauhaus-swatch i:last-child { background: #ffd735; }
     .editorial-swatch i:first-child { background: #1b1a17; } .editorial-swatch i:last-child { background: #c4512d; }
-    .midnight-swatch i:first-child { background: #071018; } .midnight-swatch i:last-child { background: #59d8ff; }
     .skin-name { font-weight: 700; } .skin-note { display: block; color: var(--muted); font: .69rem/1.2 var(--mono); }
 
     /* === GRID & MODULES === */
@@ -280,6 +268,7 @@
       .footer span:last-child { display: none; }
     }
   </style>
+  <link rel="stylesheet" href="workdesk.css">
 </head>
 <body data-theme="swiss">
   <main class="shell">
@@ -298,7 +287,6 @@
               <button class="skin-option" type="button" data-skin="swiss"><span class="swatch swiss-swatch"><i></i><i></i></span><span><b class="skin-name">Swiss Signal</b><small class="skin-note">红 / 黑 / 严格网格</small></span></button>
               <button class="skin-option" type="button" data-skin="bauhaus"><span class="swatch bauhaus-swatch"><i></i><i></i></span><span><b class="skin-name">Bauhaus Play</b><small class="skin-note">蓝 / 黄 / 几何感</small></span></button>
               <button class="skin-option" type="button" data-skin="editorial"><span class="swatch editorial-swatch"><i></i><i></i></span><span><b class="skin-name">Paper Editorial</b><small class="skin-note">纸张 / 衬线 / 安静</small></span></button>
-              <button class="skin-option" type="button" data-skin="midnight"><span class="swatch midnight-swatch"><i></i><i></i></span><span><b class="skin-name">Night Transit</b><small class="skin-note">深夜 / 青蓝 / 高对比</small></span></button>
             </div>
           </div>
         </div>
@@ -396,7 +384,7 @@
       { id: 'exam-international-finance-2026-11-26', date: '2026-11-26', text: '国际金融 · 期末考试' },
       { id: 'exam-finance-2026-11-30', date: '2026-11-30', text: '金融学 · 期末考试' }
     ];
-    const themeNames = { swiss: 'Swiss', bauhaus: 'Bauhaus', editorial: 'Editorial', midnight: 'Midnight' };
+    const themeNames = { swiss: 'Swiss', bauhaus: 'Bauhaus', editorial: 'Editorial' };
     const $ = (id) => document.getElementById(id);
     const load = () => {
       try {
@@ -483,7 +471,9 @@
     }
     function renderWeek() {
       const list = $('weekList'); list.innerHTML = '';
-      const items = state.week.slice().sort((a, b) => a.date.localeCompare(b.date));
+      const dateStart = dateKey(new Date().toISOString());
+      const end = new Date(); end.setDate(end.getDate() + 6);
+      const items = state.week.filter(item => item.date >= dateStart && item.date <= dateKey(end.toISOString())).sort((a, b) => a.date.localeCompare(b.date));
       if (!items.length) { list.innerHTML = '<li class="empty">暂无重要日期<br>有考试或截止再放进来</li>'; return; }
       items.forEach((item) => {
         const li = document.createElement('li'); li.className = 'week-item';
@@ -602,5 +592,6 @@
       save(completed ? '完成，已记下' : '已清空'); renderHistory(); $('finishDialog').close();
     });
   </script>
+  <script src="workdesk.js"></script>
 </body>
 </html>
