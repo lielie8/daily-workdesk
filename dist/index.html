@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#efede5">
   <meta name="description" content="一个低摩擦的个人学习与生活工作台。">
-  <title>今日工作台</title>
+  <title>Daily Workbench · 个人工作台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -276,7 +276,7 @@
   <main class="shell">
     <header class="masthead">
       <div>
-        <div class="brandline"><span class="brandmark"></span><div class="brand">HUI / DAILY WORKDESK</div></div>
+        <div class="brandline"><span class="brandmark"></span><div class="brand">DAILY WORKBENCH</div></div>
         <div class="issue">Focus system · 01 active task · local first</div>
       </div>
       <div class="mast-right">
@@ -382,12 +382,6 @@
         { label: '生活事项 / Life', text: '', done: false }
       ], week: [], inbox: [], history: [], systemUpdate: ''
     };
-    const EXAM_UPDATE = 'exam-dates-2026-11-v1';
-    const examDates = [
-      { id: 'exam-macro-2026-11-19', date: '2026-11-19', text: '中级宏观经济学 · 期中考试' },
-      { id: 'exam-international-finance-2026-11-26', date: '2026-11-26', text: '国际金融 · 期末考试' },
-      { id: 'exam-finance-2026-11-30', date: '2026-11-30', text: '金融学 · 期末考试' }
-    ];
     const themeNames = { swiss: 'Swiss', bauhaus: 'Bauhaus', editorial: 'Editorial', stroll: '日常散步', blueletter: '蓝色来信' };
     const $ = (id) => document.getElementById(id);
     const load = () => {
@@ -400,16 +394,6 @@
         merged.history = Array.isArray(saved.history) ? saved.history : [];
         merged.week = Array.isArray(saved.week) ? saved.week : [];
         merged.inbox = Array.isArray(saved.inbox) ? saved.inbox : [];
-        if (saved.systemUpdate !== EXAM_UPDATE) {
-          merged.focusTask = ''; merged.doneWhen = ''; merged.resumeAt = '';
-          const isRemovedProject = (text = '') => /金融智能体|金融学项目/.test(text);
-          merged.today = merged.today.map(item => isRemovedProject(item.text) ? { ...item, text: '', done: false, logId: undefined } : item);
-          merged.inbox = merged.inbox.filter(item => !isRemovedProject(item.text));
-          examDates.forEach(exam => {
-            if (!merged.week.some(item => item.id === exam.id || (item.date === exam.date && item.text === exam.text))) merged.week.push(exam);
-          });
-          merged.systemUpdate = EXAM_UPDATE;
-        }
         return merged;
       } catch { return JSON.parse(JSON.stringify(defaults)); }
     };

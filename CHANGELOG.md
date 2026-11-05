@@ -1,0 +1,26 @@
+# Changelog
+
+## 2026-11-05 · Public project preparation
+
+- 正式命名为 **Daily Workbench**。
+- 添加中英文 README、MIT 许可证及贡献指南。
+- 新安装不再预填作者的个人考试和申请时间；保留已有浏览器数据与历史存储键。
+- 整理公开仓库的说明与主题标签。
+
+## 2026-11-05 · Themes and layered workspace
+
+- 加入今日、本周、奖励和更多入口。
+- 加入精力选择、任务管理、项目、路线图、健康记录与轻量复盘。
+- 奖励支持添加、编辑、随机挑选和“已享受”状态。
+- 新增“日常散步”和“蓝色来信”皮肤，移除 Night Transit。
+- 移除固定英语保底栏；重要日期完整保留在本周页，首页显示未来七天。
+
+## 2026-09-21 · Completion history
+
+- 加入自动完成记录、手动补记、日期分组和近七天概览。
+
+## 2026-09-18 · Initial workspace
+
+- 当前任务、完成线、断点、今日事项、日程及随手记录。
+- 浏览器本地存储与专注模式。
+- Swiss Signal、Bauhaus Play、Paper Editorial 等早期皮肤。

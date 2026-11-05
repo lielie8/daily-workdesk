@@ -1,0 +1,20 @@
+# Local tools and temporary artifacts
+.sites-runtime/
+node_modules/
+work/
+outputs/
+*.tar.gz
+*.log
+
+# Private configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor and operating system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
