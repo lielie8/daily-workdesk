@@ -333,7 +333,7 @@
       <aside class="column">
         <section class="module" aria-labelledby="weekTitle">
           <span class="module-index">03</span>
-          <div class="section-head"><h2 class="section-title" id="weekTitle">最近七天</h2><span class="section-note">只放有日期的事</span></div>
+          <div class="section-head"><h2 class="section-title" id="weekTitle">重要日期</h2><span class="section-note">考试 / 截止<br>不等于今天要做</span></div>
           <ul class="week-list" id="weekList"></ul>
           <form class="quick-form" id="weekForm">
             <input type="date" id="weekDate" aria-label="日期" required>
@@ -389,8 +389,14 @@
         { label: '主任务 / Main', text: '', done: false },
         { label: '英语保底 / English', text: '', done: false },
         { label: '生活事项 / Life', text: '', done: false }
-      ], week: [], inbox: [], history: []
+      ], week: [], inbox: [], history: [], systemUpdate: ''
     };
+    const EXAM_UPDATE = 'exam-dates-2026-11-v1';
+    const examDates = [
+      { id: 'exam-macro-2026-11-19', date: '2026-11-19', text: '中级宏观经济学 · 期中考试' },
+      { id: 'exam-international-finance-2026-11-26', date: '2026-11-26', text: '国际金融 · 期末考试' },
+      { id: 'exam-finance-2026-11-30', date: '2026-11-30', text: '金融学 · 期末考试' }
+    ];
     const themeNames = { swiss: 'Swiss', bauhaus: 'Bauhaus', editorial: 'Editorial', midnight: 'Midnight' };
     const $ = (id) => document.getElementById(id);
     const load = () => {
@@ -399,10 +405,23 @@
         const merged = { ...defaults, ...saved };
         merged.today = (saved.today || defaults.today).map((item, i) => ({ ...item, label: defaults.today[i].label }));
         merged.history = Array.isArray(saved.history) ? saved.history : [];
+        merged.week = Array.isArray(saved.week) ? saved.week : [];
+        merged.inbox = Array.isArray(saved.inbox) ? saved.inbox : [];
+        if (saved.systemUpdate !== EXAM_UPDATE) {
+          merged.focusTask = ''; merged.doneWhen = ''; merged.resumeAt = '';
+          const isRemovedProject = (text = '') => /金融智能体|金融学项目/.test(text);
+          merged.today = merged.today.map(item => isRemovedProject(item.text) ? { ...item, text: '', done: false, logId: undefined } : item);
+          merged.inbox = merged.inbox.filter(item => !isRemovedProject(item.text));
+          examDates.forEach(exam => {
+            if (!merged.week.some(item => item.id === exam.id || (item.date === exam.date && item.text === exam.text))) merged.week.push(exam);
+          });
+          merged.systemUpdate = EXAM_UPDATE;
+        }
         return merged;
       } catch { return JSON.parse(JSON.stringify(defaults)); }
     };
     let state = load(); let saveTimer;
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
 
     function save(message = '已保存') {
       localStorage.setItem(STORE_KEY, JSON.stringify(state));
@@ -464,7 +483,7 @@
     function renderWeek() {
       const list = $('weekList'); list.innerHTML = '';
       const items = state.week.slice().sort((a, b) => a.date.localeCompare(b.date));
-      if (!items.length) { list.innerHTML = '<li class="empty">暂无安排<br>只添加真正有日期的事情</li>'; return; }
+      if (!items.length) { list.innerHTML = '<li class="empty">暂无重要日期<br>有考试或截止再放进来</li>'; return; }
       items.forEach((item) => {
         const li = document.createElement('li'); li.className = 'week-item';
         const date = document.createElement('span'); date.className = 'week-date'; date.textContent = localDate(item.date);
@@ -544,8 +563,7 @@
     const today = new Date();
     $('dateNumber').textContent = String(today.getDate()).padStart(2, '0');
     $('dateMeta').textContent = `${today.getFullYear()} / ${String(today.getMonth() + 1).padStart(2, '0')} · 周${'日一二三四五六'[today.getDay()]}`;
-    const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + 7);
-    $('weekDate').min = today.toISOString().slice(0, 10); $('weekDate').max = maxDate.toISOString().slice(0, 10);
+    $('weekDate').min = today.toISOString().slice(0, 10);
 
     $('skinToggle').addEventListener('click', () => {
       const open = $('skinMenu').classList.toggle('open'); $('skinToggle').setAttribute('aria-expanded', String(open));
@@ -566,7 +584,7 @@
     });
     $('weekForm').addEventListener('submit', (event) => {
       event.preventDefault(); state.week.push({ id: crypto.randomUUID(), date: $('weekDate').value, text: $('weekText').value.trim() });
-      $('weekText').value = ''; save('已加入七天安排'); renderWeek();
+      $('weekText').value = ''; save('已加入重要日期'); renderWeek();
     });
     $('inboxForm').addEventListener('submit', (event) => {
       event.preventDefault(); const text = $('inboxText').value.trim(); if (!text) return;
