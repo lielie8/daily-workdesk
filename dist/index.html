@@ -483,9 +483,9 @@
         li.append(text, del); list.append(li);
       });
     }
-    function addHistory(text, source = '补记') {
+    function addHistory(text, source = '补记', completedAt = new Date().toISOString()) {
       const id = crypto.randomUUID();
-      state.history.unshift({ id, text, source, completedAt: new Date().toISOString() });
+      state.history.unshift({ id, text, source, completedAt });
       return id;
     }
     function dateKey(iso) {

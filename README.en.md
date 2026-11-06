@@ -8,14 +8,14 @@ Daily Workbench is a small, local-first personal dashboard for study, tasks, rew
 
 ## What is inside
 
-- **Today:** energy selection, a current task with a finish line and a resume point, two daily items, and upcoming deadlines within seven days.
+- **Today:** energy selection, a current task with a finish line and a resume point, two daily items, one-off or recurring errands, and upcoming deadlines within seven days.
 - **This Week:** three weekly outcomes, an editable workload budget, tasks with priority/date/effort/next action, all important dates, and an inbox.
 - **Rewards:** collect things you want to do, add notes, pick one at random, and mark it enjoyed. No points or streak requirements.
 - **Projects:** goals, milestones, next actions, dates, results, and up to two active projects.
 - **Roadmap:** editable stages for longer-term direction.
 - **Wellbeing:** optional sleep, energy, activity, stress, and support notes.
 - **Review:** three weekly reflection questions plus an optional monthly check-in.
-- **Completion history:** automatic entries from completed tasks, manual notes, date grouping, and a seven-day overview.
+- **Completion history:** automatic entries from completed tasks, checked-off errands and enjoyed rewards, plus manual notes and a seven-day overview.
 
 ## Themes
 

@@ -5,6 +5,14 @@
   const monday = () => { const d = new Date(); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return dateKey(d.toISOString()); };
   state.desk ||= { tasks:[], projects:[], rewards:[], weeks:{}, wellbeing:{}, reviews:{}, roadmap:null };
   const data = state.desk;
+  data.errands ??= [];
+  let backfilledRewards = false;
+  for (const reward of data.rewards) {
+    if (reward.done && reward.enjoyedAt && !reward.enjoyLogId && Number.isFinite(Date.parse(reward.enjoyedAt))) {
+      reward.enjoyLogId = addHistory(reward.title, '奖励 · 已享受', reward.enjoyedAt);
+      backfilledRewards = true;
+    }
+  }
   data.roadmap ||= [
     { period:'阶段 01', title:'确定当前重点', note:'' },
     { period:'阶段 02', title:'准备与探索', note:'' },
@@ -26,6 +34,48 @@
   function renderEnergy(){const current=data.wellbeing[day()]?.energy;energy.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.energy===current)));energyNote.textContent=current==='低能量'?'今天可以从一个 5–20 分钟的小步骤开始。':current==='充足'?'按自己的节奏推进，完成预定目标就可以停。':'先选一件值得推进的事，也可以先休息。';}
   const originalInbox=$('inboxList').closest('.module');
   const teaser=document.createElement('section');teaser.className='module reward-teaser';originalInbox.replaceWith(teaser);
+  const errands=document.createElement('section');
+  errands.className='module errands'; errands.setAttribute('aria-labelledby','errandsTitle');
+  errands.innerHTML=`<div class="module-kicker">LITTLE THINGS / 日常</div><div class="errands-head"><h2 class="section-title" id="errandsTitle">日常事务</h2><span class="section-note" id="errandsCount" aria-live="polite"></span></div><ul class="errand-list" id="errandsList"></ul><form class="errand-form" id="errandsForm"><input name="text" aria-label="新增日常事务" placeholder="健身、拿快递…" maxlength="100" autocomplete="off" required><button class="primary" type="submit">＋ 添加</button><label><input name="daily" type="checkbox"> 每天重复</label></form>`;
+  teaser.before(errands);
+  let errandsDay;
+  function renderErrands() {
+    errandsDay=day();
+    const visible=data.errands.filter(item=>item.daily||!item.doneOn||item.doneOn===errandsDay);
+    const isDone=item=>item.doneOn===errandsDay;
+    visible.sort((a,b)=>Number(isDone(a))-Number(isDone(b)));
+    $('errandsCount').textContent=visible.length?`${visible.filter(isDone).length} / ${visible.length} 已勾选`:'';
+    $('errandsList').innerHTML=visible.map(item=>`<li class="errand-row${isDone(item)?' done':''}"><label><input type="checkbox" data-errand="${esc(item.id)}"${isDone(item)?' checked':''}><span>${esc(item.text)}</span>${item.daily?'<small>每天</small>':''}</label><button class="icon-btn" type="button" data-remove-errand="${esc(item.id)}" aria-label="移除：${esc(item.text)}">×</button></li>`).join('');
+  }
+  $('errandsForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const form=e.currentTarget;const fields=new FormData(form);const text=fields.get('text').trim();
+    if(!text)return;
+    data.errands.push({id:crypto.randomUUID(),text,daily:fields.has('daily')});
+    persist('日常事务已添加');form.reset();renderErrands();form.elements.text.focus();
+  });
+  $('errandsList').addEventListener('change',e=>{
+    const item=data.errands.find(x=>x.id===e.target.dataset.errand);
+    if(!item)return;
+    if(errandsDay!==day()){renderErrands();return;}
+    if(e.target.checked&&item.doneOn!==errandsDay){
+      item.doneOn=errandsDay;item.logId=addHistory(item.text,'日常事务');
+    }else if(!e.target.checked&&item.doneOn===errandsDay){
+      state.history=state.history.filter(entry=>entry.id!==item.logId);
+      delete item.doneOn;delete item.logId;
+    }
+    persist();renderHistory();renderErrands();
+    Array.from($('errandsList').querySelectorAll('[data-errand]')).find(input=>input.dataset.errand===item.id)?.focus();
+  });
+  $('errandsList').addEventListener('click',e=>{
+    const button=e.target.closest('[data-remove-errand]');if(!button)return;
+    data.errands=data.errands.filter(item=>item.id!==button.dataset.removeErrand);
+    persist('日常事务已移除');renderErrands();$('errandsForm').elements.text.focus();
+  });
+  const refreshErrandsDay=()=>{if(errandsDay!==day())renderErrands();};
+  window.addEventListener('focus',refreshErrandsDay);
+  document.addEventListener('visibilitychange',refreshErrandsDay);
+  setInterval(refreshErrandsDay,30000);
   const page=document.createElement('section');page.className='desk-page';page.hidden=true;page.id='deskPage';workspace.after(page);
   const dialog=document.createElement('dialog');dialog.className='desk-dialog';shell.after(dialog);
   let active='today';
@@ -39,7 +89,18 @@
   const domains=['学业','职业','留学','健康','个人生活'];
   function editTask(id){const task=data.tasks.find(t=>t.id===id)||{};openEditor(id?'编辑任务':'添加任务',field('text','要做的具体动作',task.text)+`<details><summary>优先级、日期与更多信息</summary><div class="desk-pair">${select('domain','领域',domains,task.domain)}${select('priority','优先级',['P1 重要','P0 紧急','P2 可选'],task.priority)}${field('date','截止日期',task.date,'date')}${field('minutes','预计分钟数',task.minutes||20,'number')}${select('energy','所需精力',['低','中','高'],task.energy)}${select('status','状态',['待办','进行中','完成','暂停','取消'],task.status)}</div>${select('project','所属项目',['',...data.projects.map(p=>p.title)],task.project)}${area('next','下一步 / 最小动作',task.next)}</details>`,values=>{if(!values.text.trim())return;const next={...task,...values,id:task.id||crypto.randomUUID()};if(next.status==='完成'&&task.status!=='完成')next.logId=addHistory(next.text,next.domain);if(task.id)data.tasks[data.tasks.indexOf(task)]=next;else data.tasks.push(next);renderHistory();});}
   function taskRows(){const order={'P0 紧急':0,'P1 重要':1,'P2 可选':2};return data.tasks.slice().sort((a,b)=>(order[a.priority]??1)-(order[b.priority]??1)).map(t=>`<article class="desk-row ${t.status==='完成'?'done':''}"><div class="desk-tag">${esc(t.domain)} · ${esc(t.priority)} · ${esc(t.status)}${t.date?' · '+esc(t.date):''}${t.minutes?' · '+esc(t.minutes)+'分钟':''}</div><h3>${esc(t.text)}</h3>${t.next?`<p class="desk-muted">下一步：${esc(t.next)}</p>`:''}<div class="desk-actions">${!['完成','取消'].includes(t.status)?action('start',t.id,'现在做')+action('done',t.id,'✓ 完成'):''}${action('edit-task',t.id,'编辑')}${action('delete-task',t.id,'删除')}</div></article>`).join('')||empty('还没有任务。需要时再添加一个具体动作。');}
-  function renderWeekPage(){const key=monday();const w=data.weeks[key]||={results:['','',''],budget:''};page.innerHTML=heading('THIS WEEK / '+key,'本周计划','三个关键结果，按精力调整工作量。')+`<div class="desk-grid"><div><section class="module desk-box"><h2>本周关键结果</h2><form class="desk-form" id="weekPlan">${['必须完成','重点推进','有余力再做'].map((label,i)=>field('result'+i,label,w.results[i])).join('')}${area('budget','各领域预算 · 可自由填写',w.budget)}<button class="primary">保存本周计划</button></form></section><section class="module desk-box"><div class="desk-heading" style="margin:0 0 12px"><h2>任务清单</h2>${action('new-task','','＋ 添加')}</div><p class="desk-muted">${data.tasks.filter(t=>t.status==='完成').length} 项已完成 · 随时调整优先级与工作量</p>${taskRows()}</section></div><div><section class="module desk-box"><h2>所有重要日期</h2>${state.week.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(x=>`<div class="desk-row"><span class="desk-tag">${esc(x.date)}</span><h3>${esc(x.text)}</h3></div>`).join('')||empty('暂无日期')}<p class="desk-muted">首页只显示未来七天；其他日期保留在这里。</p></section><div id="inboxMount"></div></div></div>`;page.querySelector('#inboxMount').append(originalInbox);page.querySelector('#weekPlan').onsubmit=e=>{e.preventDefault();const f=new FormData(e.target);w.results=[0,1,2].map(i=>f.get('result'+i));w.budget=f.get('budget');persist('本周计划已保存');};}
+  function renderWeekPage(){const key=monday();const w=data.weeks[key]||={results:['','',''],budget:''};page.innerHTML=heading('THIS WEEK / '+key,'本周计划','三个关键结果，按精力调整工作量。')+`<div class="desk-grid"><div><section class="module desk-box"><h2>本周关键结果</h2><form class="desk-form" id="weekPlan">${['必须完成','重点推进','有余力再做'].map((label,i)=>field('result'+i,label,w.results[i])).join('')}${area('budget','各领域预算 · 可自由填写',w.budget)}<button class="primary" type="submit">保存本周计划</button><p class="week-save-note" role="status"></p></form></section><section class="module desk-box"><div class="desk-heading" style="margin:0 0 12px"><h2>任务清单</h2>${action('new-task','','＋ 添加')}</div><p class="desk-muted">${data.tasks.filter(t=>t.status==='完成').length} 项已完成 · 随时调整优先级与工作量</p>${taskRows()}</section></div><div><section class="module desk-box"><h2>所有重要日期</h2>${state.week.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(x=>`<div class="desk-row"><span class="desk-tag">${esc(x.date)}</span><h3>${esc(x.text)}</h3></div>`).join('')||empty('暂无日期')}<p class="desk-muted">首页只显示未来七天；其他日期保留在这里。</p></section><div id="inboxMount"></div></div></div>`;page.querySelector('#inboxMount').append(originalInbox);const form=page.querySelector('#weekPlan');
+    const note=form.querySelector('.week-save-note');
+    form.addEventListener('input',()=>{note.textContent='';});
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const f=new FormData(form);
+      const previous=data.weeks[key];
+      data.weeks[key]={results:[0,1,2].map(i=>f.get('result'+i)),budget:f.get('budget')};
+      try { persist('本周计划已保存'); note.textContent='✓ 本周计划已保存'; }
+      catch { data.weeks[key]=previous; note.textContent='无法保存。请检查浏览器是否允许此站点保存数据，再试一次。'; }
+    });
+  }
   function editReward(id){const r=data.rewards.find(x=>x.id===id)||{};openEditor(id?'编辑奖励':'记下一件想做的事',field('title','想做什么？',r.title)+select('size','适合什么时候',['小休息','空闲半天','值得期待的大计划'],r.size)+area('note','备注 / 地点 / 链接 / 预算（可空）',r.note),v=>{if(!v.title.trim())return;if(r.id)Object.assign(r,v);else data.rewards.push({...v,id:crypto.randomUUID(),done:false});});}
   function renderRewards(){page.innerHTML=heading('LITTLE JOYS / WISHLIST','给自己一点期待','把想做的事放在这里，忙完或有空时挑一个。')+`<section class="module desk-box reward-banner"><div class="desk-actions"><button class="primary" data-action="new-reward">＋ 添加想做的事</button><button class="secondary" data-action="random-reward">帮我挑一个</button></div><p class="desk-muted">随时可以安排。休息和喜欢的事，也值得留出位置。</p><p id="rewardPick" class="desk-note" aria-live="polite"></p></section><div class="reward-grid">${data.rewards.map((r,i)=>`<article class="module reward-card ${r.done?'done':''}"><div class="reward-no">${String(i+1).padStart(2,'0')} / ${esc(r.done?'已经享受':r.size)}</div><h2>${esc(r.title)}</h2><p>${esc(r.note)}</p><div class="desk-actions">${action('enjoy',r.id,r.done?'再期待一次':'✓ 已享受')}${action('edit-reward',r.id,'编辑')}${action('delete-reward',r.id,'删除')}</div>${r.enjoyedAt?`<small class="desk-muted">${esc(historyDateLabel(dateKey(r.enjoyedAt)))}</small>`:''}</article>`).join('')}</div>${!data.rewards.length?empty('从一个你真的想做的小事开始。<br>例如看场电影、踢场球、做一道想吃的菜——这些只是例子。'):''}`;}
   function editProject(id){const p=data.projects.find(x=>x.id===id)||{};openEditor(id?'编辑项目':'添加项目',field('title','项目名称',p.title)+select('domain','领域',domains,p.domain)+area('goal','目标',p.goal)+`<div class="desk-pair">${field('start','开始日期',p.start,'date')}${field('deadline','目标截止',p.deadline,'date')}</div>`+select('status','状态',['候选','进行中','暂停','完成','取消'],p.status)+area('next','下一步具体行动',p.next)+area('milestones','关键里程碑',p.milestones)+area('links','相关文件与最终成果',p.links),v=>{if(!v.title.trim())return;if(v.status==='进行中'&&data.projects.filter(x=>x.id!==p.id&&x.status==='进行中').length>=2){v.status='候选';save('已有两个进行中项目，先放候选');}if(p.id)Object.assign(p,v);else data.projects.push({...v,id:crypto.randomUUID()});});}
@@ -56,7 +117,15 @@
     case 'start':{const t=data.tasks.find(x=>x.id===id);state.focusTask=t.text;state.resumeAt=t.next||'';state.doneWhen='';data.activeTaskId=id;t.status='进行中';['focusTask','resumeAt','doneWhen'].forEach(k=>$(k).value=state[k]);persist('开始这一件');go('today');$('focusTask').focus();break;}
     case 'done':{const t=data.tasks.find(x=>x.id===id);t.status='完成';t.logId=addHistory(t.text,t.domain);persist('完成，已记下');renderHistory();render();break;}
     case 'new-reward':editReward();break;case 'edit-reward':editReward(id);break;
-    case 'enjoy':{const r=data.rewards.find(x=>x.id===id);r.done=!r.done;r.enjoyedAt=r.done?new Date().toISOString():null;persist(r.done?'好好享受':'再次期待');render();break;}
+    case 'enjoy':{
+      const r=data.rewards.find(x=>x.id===id);
+      if(!r)break;
+      r.done=!r.done;
+      r.enjoyedAt=r.done?new Date().toISOString():null;
+      if(r.done)r.enjoyLogId=addHistory(r.title,'奖励 · 已享受',r.enjoyedAt);
+      persist(r.done?'已计入完成记录':'再次期待');
+      renderHistory();render();break;
+    }
     case 'random-reward':{const list=data.rewards.filter(r=>!r.done);const r=list[Math.floor(Math.random()*list.length)];$('rewardPick').textContent=r?'这次可以：'+r.title:'先写下一件想做的事吧。';break;}
     case 'new-project':editProject();break;case 'edit-project':editProject(id);break;
     case 'delete-task':case 'delete-reward':case 'delete-project':{if(!confirm('删除这一项？已保存的完成记录会保留。'))return;const key={'delete-task':'tasks','delete-reward':'rewards','delete-project':'projects'}[b.dataset.action];data[key]=data[key].filter(x=>x.id!==id);persist('已删除');render();break;}
@@ -67,5 +136,6 @@
   $('confirmFinish').addEventListener('click',()=>{if(matchedTask){matchedTask.status='完成';matchedTask.logId=state.history[0]?.id;}delete data.activeTaskId;persist('完成，已记下');renderTeaser();});
   $('historyPanel').inert=true;
   const oldOpen=setHistoryOpen;setHistoryOpen=open=>{oldOpen(open);$('historyPanel').inert=!open;workspace.inert=page.inert=nav.inert=open;if(!open)$('historyToggle').focus();};
-  persist();render();
+  persist();render();renderErrands();
+  if(backfilledRewards)renderHistory();
 })();
